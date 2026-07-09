@@ -9,11 +9,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<any>(null);
+  const [executionTime, setExecutionTime] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     setResults(null);
+    setExecutionTime(null);
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -31,7 +33,7 @@ export default function Home() {
         setAudioFile(file);
       }
     } catch (err) {
-      setError('Invalid or corrupted audio file layout. Please pass a clear WAV or MP3 track.');
+      setError('Invalid or corrupted audio format. Please upload a clear WAV, MP3, or M4A track.');
       setAudioFile(null);
     }
   };
@@ -42,6 +44,7 @@ export default function Home() {
 
     setLoading(true);
     setError(null);
+    const startTime = performance.now();
     const formData = new FormData();
     formData.append('audio', audioFile);
 
@@ -49,6 +52,9 @@ export default function Home() {
       const response = await fetch('/api/assess', { method: 'POST', body: formData });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Pipeline breakdown');
+      
+      const endTime = performance.now();
+      setExecutionTime(Math.round(endTime - startTime));
       setResults(data);
     } catch (err: any) {
       setError(err.message);
@@ -58,57 +64,146 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 antialiased">
-      <div className="max-w-2xl w-full bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 md:p-8">
-        <header className="mb-8 border-b border-slate-700 pb-4">
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">Livo AI Technical Evaluation</h1>
-          <p className="text-slate-400 text-sm mt-1">Real-time English Speech Pronunciation Assessment Engine</p>
+    <main className="min-h-screen bg-[#030712] text-[#f9fafb] flex items-center justify-center p-4 md:p-8 font-sans">
+      <div className="max-w-3xl w-full bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-hidden">
+        
+        {/* Subtle Decorative Background Radial Glows */}
+        <div className="absolute -top-10 -right-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <header className="mb-8 border-b border-[#1f2937] pb-6">
+          <div className="flex items-center gap-3">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="text-xs font-semibold tracking-widest uppercase text-blue-400">Production-Ready Platform</span>
+          </div>
+          <h1 className="text-3xl font-black text-white mt-2 tracking-tight">VocalGrade AI</h1>
+          <p className="text-[#9ca3af] text-sm mt-1">Enterprise-grade phonetic analysis powered by multimodal architectural streaming</p>
         </header>
 
         <form onSubmit={handleUploadSubmit} className="space-y-6">
-          <div className="border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-blue-500 transition relative">
-            <input type="file" accept="audio/*" onChange={handleFileChange} ref={fileInputRef} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-            <p className="text-sm text-slate-300 font-medium">Click to upload or drag audio here</p>
-            <p className="text-xs text-slate-500 mt-1">Acceptable window constraints: 30 - 45 seconds</p>
-            {duration && !error && <p className="text-xs text-emerald-400 font-semibold mt-2">Validated: {duration.toFixed(1)}s</p>}
+          {/* Audio Upload Dropzone Area */}
+          <div className="border-2 border-dashed border-[#374151] hover:border-blue-500/50 bg-[#0b0f19] rounded-xl p-8 text-center transition group relative">
+            <input type="file" accept="audio/*" onChange={handleFileChange} ref={fileInputRef} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+            <div className="space-y-2">
+              <div className="mx-auto h-12 w-12 rounded-full bg-[#1f2937] flex items-center justify-center text-[#9ca3af] group-hover:text-blue-400 transition text-xl">
+                🎙️
+              </div>
+              <p className="text-sm text-[#f3f4f6] font-semibold">
+                {audioFile ? `Active File: ${audioFile.name}` : 'Drag & Drop or click to select vocal matrix'}
+              </p>
+              <p className="text-xs text-[#6b7280]">Acceptable window constraints: 30 - 45 seconds</p>
+            </div>
+            {duration && !error && (
+              <div className="mt-4 inline-block bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold px-3 py-1 rounded-full">
+                ✓ Validated Length: {duration.toFixed(1)}s
+              </div>
+            )}
           </div>
 
-          <div className="bg-slate-850/50 p-4 border border-slate-700 rounded-lg flex items-start gap-3">
-            <input id="dpdp" type="checkbox" checked={consentChecked} onChange={(e) => setConsentChecked(e.target.checked)} className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500 accent-blue-500" />
-            <label htmlFor="dpdp" className="text-xs text-slate-400 leading-relaxed">
-              <strong>DPDP Act 2023 Compliance Agreement:</strong> I explicitly consent to processing this voice biometry recording. Data is streamed in-memory via isolated cloud nodes, processed ephemerally, and entirely wiped upon response execution. No data is stored.
+          {/* Fully styled DPDP Consent Alert Box */}
+          <div className="bg-[#0b0f19] p-4 border border-[#1f2937] rounded-xl flex items-start gap-3 shadow-inner">
+            <input 
+              id="dpdp" 
+              type="checkbox" 
+              checked={consentChecked} 
+              onChange={(e) => setConsentChecked(e.target.checked)} 
+              className="mt-1 h-4 w-4 rounded border-[#374151] bg-[#1f2937] text-blue-500 focus:ring-blue-500 accent-blue-500 cursor-pointer" 
+            />
+            <label htmlFor="dpdp" className="text-xs text-[#9ca3af] leading-relaxed cursor-pointer select-none">
+              <strong className="text-[#e5e7eb]">DPDP Act 2023 Consent Notice:</strong> I explicitly authorize processing this localized audio snippet. The telemetry payload functions strictly in-memory over an ephemeral cloud session block and vaporizes completely upon terminal execution. No database logging is triggered.
             </label>
           </div>
 
-          {error && <div className="p-3 bg-red-900/30 border border-red-800 text-red-200 rounded-lg text-sm">{error}</div>}
+          {error && <div className="p-4 bg-red-950/40 border border-red-900/50 text-red-300 rounded-xl text-sm font-medium">{error}</div>}
 
-          <button type="submit" disabled={!audioFile || !consentChecked || loading} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-blue-600/20">
-            {loading ? 'Analyzing Phoneme Matrices...' : 'Submit Audio Track'}
-          </button>
+          {/* Conditional Rendering: Audio Processing State + Interactive Engineering Profile */}
+          {loading ? (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-[#0b0f19] border border-[#1f2937] rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+                <div className="flex items-end justify-center gap-1 h-8 w-full max-w-[100px]">
+                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.1s] h-8"></div>
+                  <div className="bg-blue-400 w-1 rounded animate-[pulse_0.8s_infinite_0.2s] h-5"></div>
+                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.3s] h-7"></div>
+                  <div className="bg-blue-300 w-1 rounded animate-[pulse_0.8s_infinite_0.4s] h-6"></div>
+                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.5s] h-8"></div>
+                </div>
+                <p className="text-xs tracking-widest text-blue-400 font-mono uppercase animate-pulse">Running Multimodal Feature Extraction...</p>
+              </div>
+
+              {/* Dynamic Presentation Component */}
+              <div className="bg-[#1f2937]/50 border border-blue-500/20 rounded-xl p-6 space-y-4">
+                <div className="border-b border-[#374151] pb-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="text-sm font-bold text-white">Saad Iqbal Chavhan</h4>
+                    <p className="text-xs text-blue-400 font-medium">Candidate Profile — SWE / DevOps / Cloud Engineer</p>
+                  </div>
+                  <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-mono uppercase">Review Dashboard</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="space-y-2">
+                    <p className="text-[#9ca3af] font-semibold uppercase tracking-wider text-[10px]">Technical Competencies</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['Docker', 'Jenkins', 'Kubernetes', 'Python', 'Linux', 'CI/CD Pipelines'].map((tech) => (
+                        <span key={tech} className="bg-[#111827] border border-[#374151] px-2 py-0.5 rounded text-[#e5e7eb] font-mono">{tech}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-1 text-[#9ca3af]">
+                    <p className="text-white font-semibold text-[10px] uppercase tracking-wider">Academic Scaffolding</p>
+                    <p>• Bachelor of Engineering — Industrial IoT</p>
+                    <p>• PRMIT&R, Badnera (Final Year Student)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button 
+              type="submit" 
+              disabled={!audioFile || !consentChecked} 
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-[#1f2937] disabled:text-[#4b5563] text-white font-bold py-3.5 px-4 rounded-xl transition shadow-xl shadow-blue-600/10 disabled:shadow-none"
+            >
+              Submit Audio Matrix
+            </button>
+          )}
         </form>
 
+        {/* Dashboard Metrics and Word Badge Output */}
         {results && (
-          <section className="mt-8 pt-6 border-t border-slate-700 space-y-6">
+          <section className="mt-10 pt-8 border-t border-[#1f2937] space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white tracking-tight">Performance Summary</h2>
+              {executionTime && (
+                <span className="text-xs font-mono bg-[#0b0f19] text-blue-400 px-3 py-1 rounded-md border border-[#1f2937]">
+                  Pipeline Roundtrip Latency: {(executionTime / 1000).toFixed(2)}s
+                </span>
+              )}
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-850 p-4 border border-slate-700 rounded-xl text-center">
-                <span className="block text-4xl font-black text-blue-400">{results.pronunciationScore}</span>
-                <span className="text-xs text-slate-500 tracking-wider uppercase font-bold">Overall Score</span>
+              <div className="bg-[#0b0f19] p-5 border border-[#1f2937] rounded-xl text-center shadow-lg">
+                <span className="block text-5xl font-black text-blue-400 tracking-tight">{results.pronunciationScore}</span>
+                <span className="text-xxs text-[#6b7280] tracking-wider uppercase font-bold block mt-1">Overall Metric Score</span>
               </div>
-              <div className="bg-slate-850 p-4 border border-slate-700 rounded-xl text-center">
-                <span className="block text-4xl font-black text-emerald-400">{results.accuracyScore}</span>
-                <span className="text-xs text-slate-500 tracking-wider uppercase font-bold">Accuracy Scale</span>
+              <div className="bg-[#0b0f19] p-5 border border-[#1f2937] rounded-xl text-center shadow-lg">
+                <span className="block text-5xl font-black text-emerald-400 tracking-tight">{results.accuracyScore}</span>
+                <span className="text-xxs text-[#6b7280] tracking-wider uppercase font-bold block mt-1">Accuracy Alignment</span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <h3 className="text-sm font-bold text-slate-300">Phonetic Sequence Break-down:</h3>
-              <div className="flex flex-wrap gap-2 bg-slate-900 p-4 rounded-xl border border-slate-700 max-h-48 overflow-y-auto">
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-[#9ca3af]">Phonetic Segment Break-down & Diagnostics:</h3>
+              <div className="flex flex-wrap gap-2 bg-[#0b0f19] p-5 rounded-xl border border-[#1f2937] leading-relaxed max-h-60 overflow-y-auto">
                 {results.words?.map((w: any, idx: number) => {
-                  let badge = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
-                  if (w.errorType === 'Mispronunciation') badge = "text-amber-400 bg-amber-500/10 border-amber-500/30";
-                  if (w.errorType === 'Omission') badge = "text-red-400 bg-red-500/10 border-red-500/30 line-through";
+                  let badge = "text-emerald-400 bg-emerald-500/5 border-emerald-500/20";
+                  if (w.errorType === 'Mispronunciation') badge = "text-amber-400 bg-amber-500/5 border-amber-500/20";
+                  if (w.errorType === 'Omission') badge = "text-[#f87171] bg-red-500/5 border-red-500/20 line-through";
+                  
                   return (
-                    <span key={idx} className={`px-2.5 py-1 text-xs font-semibold tracking-wide border rounded-md ${badge}`} title={`Accuracy: ${w.accuracyScore}%`}>
+                    <span 
+                      key={idx} 
+                      className={`inline-block px-3 py-1.5 text-xs font-semibold tracking-wide border rounded-lg transition-transform hover:scale-105 cursor-help ${badge}`} 
+                      title={`Confidence: ${w.accuracyScore}% | Status: ${w.errorType}`}
+                    >
                       {w.word}
                     </span>
                   );

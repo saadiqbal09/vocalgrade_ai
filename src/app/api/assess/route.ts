@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     // 4. Stream to Multimodal Model Mesh
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-latest',
       contents: [
         {
           role: 'user',

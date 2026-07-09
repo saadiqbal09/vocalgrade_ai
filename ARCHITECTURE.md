@@ -1,72 +1,49 @@
-# VocalGrade AI — System Architecture Document
-**Author:** Saad Iqbal Chavhan  
-**Target:** SWE Technical Evaluation (Livo AI)  
-**Deployment Context:** Ephemeral Multi-modal Inference Framework  
+# VocalGrade AI — System Architecture
 
----
+*Livo AI Technical Assessment — Saad Iqbal Chavhan*
 
-## 1. Component Architecture & System Topography
+## 1. Components and Data Flow
 
-VocalGrade AI is built on a serverless, decoupled architecture designed for low latency, client-side safety validation, and automated compute teardowns.
-Client Web Browser (Next.js SPA)]
-│
-│ (1) Local Audio File Integrity & Constraints Check (30-45s)
-▼
-[Serverless API Execution Node (Vercel Edge/Node.js Runtime)]
-│
-│ (2) Volatile RAM Buffer Object (Zero Disk Writes)
-▼
-[Google Multimodal Cloud Model Mesh (Gemini 3.1 Flash-Lite)]
-│
-│ (3) High-Speed Ephemeral Inference Mapping
-▼
-[JSON Metadata Structured Data Output Payload]
-│
-│ (4) Telemetry Engine Parsing & Token Render Loop
-▼
-[Client Interface View Update (UI Updates / Component Refresh)]
-### Component Breakdown:
-1. **Client Single Page Application (Next.js + Tailwind CSS):** Handles hardware validation (Web Audio API) to ensure zero unauthorized payload sizes reach the serverless infrastructure. Includes a custom pipeline UX interstitial to showcase candidate engineering profiles during transport.
-2. **Serverless API Layer (Vercel Node.js Runtime):** Instantiates runtime instances *inside* the execution frame to prevent state leaks or credential loss across cold starts.
-3. **Multimodal Inference Node (Google Gemini API):** Operates on the high-concurrency `gemini-3.1-flash-lite` engine to calculate pronunciation metrics and phonetic breakdowns under tight latency boundaries.
+```
+Browser (Client)          Next.js API Route         Gemini API              Results
+Next.js UI          →     (Vercel serverless)   →   (gemini-3.1-flash-lite) → rendered
+Audio upload +             In-memory audio            Scores audio,           in browser
+duration check              buffer only                returns JSON
+                                                                                  │
+                                                                                  ▼
+                                                                    buffer discarded after
+                                                                    response (no disk / DB)
+```
 
----
+The app has three parts: a Next.js frontend that captures and validates audio in the browser, a Next.js API route (running as a Vercel serverless function) that acts as a thin proxy, and the Gemini API that performs the actual scoring. There is no database and no file storage anywhere in the flow. Audio exists only as an in-memory buffer for the duration of a single request, then is discarded when the function invocation ends.
 
-## 2. Model Selection & Rationale
+## 2. Models and APIs Used, and Why
 
-| Selected Core Model | Considered Alternatives | Strategic Engineering Rationale |
-| :--- | :--- | :--- |
-| **Gemini 3.1 Flash-Lite** | Whisper Large + Claude 3.5 Sonnet Pipeline | **Consolidated Pipe:** Combining separate STT models with downstream LLM assessors doubles latency and costs. Flash-Lite processes multi-modal audio directly in a single context block, dropping response latency down to **~4.8 seconds**. |
-| **Gemini 3.1 Flash-Lite** | Gemini 3.5 Flash | **Free Tier Stability:** While the standard Flash tier frequently hits global server saturation (HTTP 503 Spikes), the Flash-Lite engine delivers reliable, low-congestion public channels without performance degrading. |
+**Model:** Google Gemini (`gemini-3.1-flash-lite`), called via the `@google/genai` SDK from the API route.
 
----
+Why this over a dedicated pronunciation-assessment API (e.g. Azure AI Speech Pronunciation Assessment): a purpose-built pronunciation API would give more precise phoneme-level scoring out of the box. I chose Gemini instead because it accepts audio directly as a multimodal input and can be constrained to return a structured JSON schema (score plus per-word error tags) in a single call, which meant no separate STT step, no phoneme-alignment library, and a much smaller integration surface to build and test within the assessment timeline. The trade-off is that the scoring is LLM-judged rather than derived from a dedicated acoustic model, so it is less precise at the phoneme level than a purpose-built pronunciation API would be.
 
-## 3. Pronunciation Evaluation & Structured Diagnostics
+## 3. Scoring and Highlighting Methodology
 
-* **Audio Processing:** Raw binary streams are extracted, converted cleanly to a memory-isolated Base64 block, and evaluated natively by the model using structural scoring prompts.
-* **Deterministic Contract Enforcement:** The backend enforces a strict structural JSON schema via the SDK configuration layer. The model is constrained to map sequential words back into an exact object model matching individual error fields:
-  * `None`: Perfect phonetic alignment (Green Badge).
-  * `Mispronunciation`: Accent variation or structural distortion (Amber Badge).
-  * `Omission`: Dropped vocabulary segments or missing speech frames (Red Strikethrough Badge).
+- The API route sends the raw audio buffer to Gemini with a prompt instructing it to act as a pronunciation evaluator and return a fixed JSON schema: an overall pronunciation score, an accuracy score, and a word-by-word array with each word's text, a confidence/accuracy value, and an error tag (none, mispronunciation, or omission).
+- The JSON schema is enforced on the API call so the response is always structured and parseable, rather than free-form text that would need separate parsing/regex.
+- The frontend maps each word's error tag directly to a highlight color: green for no issue, amber for mispronunciation, red with strikethrough for an omitted/skipped word. Hovering a word shows its confidence score and error type.
+- This means the model itself decides what counts as a mistake; there is no separate rules-based scoring layer. That is a deliberate simplification given the timeline (see Trade-offs).
 
----
+## 4. DPDP Act 2023 Compliance
 
-## 4. DPDP Act 2023 Compliance Framework
+**Storage:** None. Audio is held only as an in-memory buffer inside the serverless function for the duration of one request. It is never written to disk, a database, or any cache.
 
-Compliance is engineered into the system topology as a foundational element, not handled as an afterthought:
+**Retention:** Zero. The buffer is released when the function returns its response, which is typically within a few seconds. There is no retention period to configure because nothing is persisted.
 
-* **Informed Consent Lifecycle:** The core application loop features a strict, blocking interaction barrier. No telemetry data is streamed, read, or generated unless the user checks the explicit DPDP authorization token.
-* **Zero Persistent Footprint (Data Minimization):** The platform maintains no database connections, file logs, caching arrays, or block storage mounts. Audio content is stored strictly in volatile RAM as an array buffer.
-* **Immediate Purging:** Once the multi-modal payload finishes execution and returns the JSON diagnostics, the RAM memory spaces are immediately cleared out by the runtime engine's native garbage collector. The retention window is precisely equal to the request execution duration (~4.8s).
-* **Residency & Sovereignty:** In production deployment environments, execution frames default to regional localization edges to honor sovereign border requirements.
+**Consent:** The user must check an explicit, plain-language consent box before the submit button is enabled. No audio is uploaded until consent is given.
 
----
+**Data residency:** This is a known limitation of the current build: audio is sent to Google's Gemini API, which processes requests on Google's general-purpose infrastructure rather than a guaranteed India-region endpoint. A production version handling real user data under DPDP would need to move to Vertex AI with an India region configured, or a self-hosted/India-hosted model, to make a firm data-residency guarantee rather than relying on the public Gemini API's default routing.
 
-## 5. Explicit Engineering Trade-offs
+**Deletion:** Not applicable in the traditional sense — since nothing is stored, there is no user data to locate or delete. This also means there is currently no way for a user to request deletion of past results, because past results do not exist anywhere after the response is shown once.
 
-1. **Omission of Analytics & Logging:** To maintain an airtight, zero-retention privacy posture under the DPDP Act 2023, standard error-tracking telemetry and request logging are completely omitted by design.
-2. **Stateless Progress Engine:** Users cannot save their scores over time natively. Building a progress dashboard would require persistent cloud databases, introducing storage compliance risks under Indian data protection laws.
+## 5. Trade-offs and What I'd Build Next
 
-### What to Build Next (Next-Week Roadmap)
-If allocated an additional week of development time, the following features would be implemented:
-* **Localized Audio Processing (WebAssembly):** Compile an optimized on-device phonetic scoring matrix directly in the user's browser using WASM. This would drop network latency to zero and provide absolute privacy, since data would never leave the client's local computer.
+- Chose a general multimodal model (Gemini) with JSON-schema enforcement over building a custom STT + phoneme-alignment pipeline, to fit the assessment timeline. Trade-off: lower scoring precision than a purpose-built pronunciation API, in exchange for a much smaller, faster-to-build integration.
+- No user accounts, no history, fully stateless per request. This keeps the compliance story simple and honest, but means a learner can't track improvement over time — the single biggest feature gap versus a real product.
+- With another week: move audio processing to an India-region endpoint for a real data-residency guarantee; add opt-in, explicitly consented history storage (with a user-facing deletion control) for learners who want progress tracking; add a fallback scoring path in case the Gemini API is rate-limited or unavailable; and replace LLM-judged scoring with a hybrid approach — a dedicated phoneme-alignment model for the numeric score, with the LLM used only to generate human-readable explanations of each flagged word.

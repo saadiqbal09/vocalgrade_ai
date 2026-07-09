@@ -67,17 +67,9 @@ export default function Home() {
     <main className="min-h-screen bg-[#030712] text-[#f9fafb] flex items-center justify-center p-4 md:p-8 font-sans">
       <div className="max-w-3xl w-full bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl p-6 md:p-10 relative overflow-hidden">
         
-        {/* Subtle Decorative Background Radial Glows */}
-        <div className="absolute -top-10 -right-10 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        
         <header className="mb-8 border-b border-[#1f2937] pb-6">
-          <div className="flex items-center gap-3">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span className="text-xs font-semibold tracking-widest uppercase text-blue-400">Production-Ready Platform</span>
-          </div>
-          <h1 className="text-3xl font-black text-white mt-2 tracking-tight">VocalGrade AI</h1>
-          <p className="text-[#9ca3af] text-sm mt-1">Enterprise-grade phonetic analysis powered by multimodal architectural streaming</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">VocalGrade AI</h1>
+          <p className="text-[#9ca3af] text-sm mt-1">Upload an audio recording to evaluate and improve your English pronunciation.</p>
         </header>
 
         <form onSubmit={handleUploadSubmit} className="space-y-6">
@@ -89,7 +81,7 @@ export default function Home() {
                 🎙️
               </div>
               <p className="text-sm text-[#f3f4f6] font-semibold">
-                {audioFile ? `Active File: ${audioFile.name}` : 'Drag & Drop or click to select vocal matrix'}
+                {audioFile ? `Active File: ${audioFile.name}` : 'Drag & Drop or click to select an audio file'}
               </p>
               <p className="text-xs text-[#6b7280]">Acceptable window constraints: 30 - 45 seconds</p>
             </div>
@@ -100,7 +92,7 @@ export default function Home() {
             )}
           </div>
 
-          {/* Fully styled DPDP Consent Alert Box */}
+          {/* Consent Checkbox */}
           <div className="bg-[#0b0f19] p-4 border border-[#1f2937] rounded-xl flex items-start gap-3 shadow-inner">
             <input 
               id="dpdp" 
@@ -110,51 +102,23 @@ export default function Home() {
               className="mt-1 h-4 w-4 rounded border-[#374151] bg-[#1f2937] text-blue-500 focus:ring-blue-500 accent-blue-500 cursor-pointer" 
             />
             <label htmlFor="dpdp" className="text-xs text-[#9ca3af] leading-relaxed cursor-pointer select-none">
-              <strong className="text-[#e5e7eb]">DPDP Act 2023 Consent Notice:</strong> I explicitly authorize processing this localized audio snippet. The telemetry payload functions strictly in-memory over an ephemeral cloud session block and vaporizes completely upon terminal execution. No database logging is triggered.
+              <strong className="text-[#e5e7eb]">DPDP Act 2023 Consent Notice:</strong> I explicitly authorize processing this voice recording. The audio data is processed entirely in-memory and deleted immediately after generating your score. No data is saved or stored long-term.
             </label>
           </div>
 
           {error && <div className="p-4 bg-red-950/40 border border-red-900/50 text-red-300 rounded-xl text-sm font-medium">{error}</div>}
 
-          {/* Conditional Rendering: Audio Processing State + Interactive Engineering Profile */}
+          {/* Loading Animation State */}
           {loading ? (
-            <div className="space-y-6 animate-fade-in">
-              <div className="bg-[#0b0f19] border border-[#1f2937] rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
-                <div className="flex items-end justify-center gap-1 h-8 w-full max-w-[100px]">
-                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.1s] h-8"></div>
-                  <div className="bg-blue-400 w-1 rounded animate-[pulse_0.8s_infinite_0.2s] h-5"></div>
-                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.3s] h-7"></div>
-                  <div className="bg-blue-300 w-1 rounded animate-[pulse_0.8s_infinite_0.4s] h-6"></div>
-                  <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.5s] h-8"></div>
-                </div>
-                <p className="text-xs tracking-widest text-blue-400 font-mono uppercase animate-pulse">Running Multimodal Feature Extraction...</p>
+            <div className="bg-[#0b0f19] border border-[#1f2937] rounded-xl p-6 flex flex-col items-center justify-center space-y-4">
+              <div className="flex items-end justify-center gap-1 h-8 w-full max-w-[100px]">
+                <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.1s] h-8"></div>
+                <div className="bg-blue-400 w-1 rounded animate-[pulse_0.8s_infinite_0.2s] h-5"></div>
+                <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.3s] h-7"></div>
+                <div className="bg-blue-300 w-1 rounded animate-[pulse_0.8s_infinite_0.4s] h-6"></div>
+                <div className="bg-blue-500 w-1 rounded animate-[pulse_0.8s_infinite_0.5s] h-8"></div>
               </div>
-
-              {/* Dynamic Presentation Component */}
-              <div className="bg-[#1f2937]/50 border border-blue-500/20 rounded-xl p-6 space-y-4">
-                <div className="border-b border-[#374151] pb-3 flex justify-between items-center">
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Saad Iqbal Chavhan</h4>
-                    <p className="text-xs text-blue-400 font-medium">Candidate Profile — SWE / DevOps / Cloud Engineer</p>
-                  </div>
-                  <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded font-mono uppercase">Review Dashboard</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="space-y-2">
-                    <p className="text-[#9ca3af] font-semibold uppercase tracking-wider text-[10px]">Technical Competencies</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {['Docker', 'Jenkins', 'Kubernetes', 'Python', 'Linux', 'CI/CD Pipelines'].map((tech) => (
-                        <span key={tech} className="bg-[#111827] border border-[#374151] px-2 py-0.5 rounded text-[#e5e7eb] font-mono">{tech}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-[#9ca3af]">
-                    <p className="text-white font-semibold text-[10px] uppercase tracking-wider">Academic Scaffolding</p>
-                    <p>• Bachelor of Engineering — Industrial IoT</p>
-                    <p>• PRMIT&R, Badnera (Final Year Student)</p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-xs tracking-widest text-blue-400 font-mono uppercase animate-pulse">Scoring your audio...</p>
             </div>
           ) : (
             <button 
@@ -162,7 +126,7 @@ export default function Home() {
               disabled={!audioFile || !consentChecked} 
               className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-[#1f2937] disabled:text-[#4b5563] text-white font-bold py-3.5 px-4 rounded-xl transition shadow-xl shadow-blue-600/10 disabled:shadow-none"
             >
-              Submit Audio Matrix
+              Get My Score
             </button>
           )}
         </form>
@@ -174,7 +138,7 @@ export default function Home() {
               <h2 className="text-lg font-bold text-white tracking-tight">Performance Summary</h2>
               {executionTime && (
                 <span className="text-xs font-mono bg-[#0b0f19] text-blue-400 px-3 py-1 rounded-md border border-[#1f2937]">
-                  Pipeline Roundtrip Latency: {(executionTime / 1000).toFixed(2)}s
+                  Processed in {(executionTime / 1000).toFixed(2)}s
                 </span>
               )}
             </div>
@@ -191,7 +155,7 @@ export default function Home() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-bold text-[#9ca3af]">Phonetic Segment Break-down & Diagnostics:</h3>
+              <h3 className="text-sm font-bold text-[#9ca3af]">Word-by-word breakdown:</h3>
               <div className="flex flex-wrap gap-2 bg-[#0b0f19] p-5 rounded-xl border border-[#1f2937] leading-relaxed max-h-60 overflow-y-auto">
                 {results.words?.map((w: any, idx: number) => {
                   let badge = "text-emerald-400 bg-emerald-500/5 border-emerald-500/20";

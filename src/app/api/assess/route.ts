@@ -2,10 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI, Type } from '@google/genai';
 
 export const runtime = 'nodejs';
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(request: NextRequest) {
   try {
+    // 1. Dynamic Initialization inside the request execution scope
+    const apiKey = process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      console.error("🔒 Server Configuration Error: GEMINI_API_KEY is missing from runtime.");
+      return NextResponse.json(
+        { error: 'Server authentication credentials missing. Please verify Vercel environment variables.' }, 
+        { status: 500 }
+      );
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+
+    // 2. Extract Multipart Payload
     const formData = await request.formData();
     const audioFile = formData.get('audio') as File | null;
 
@@ -13,9 +26,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No audio file provided.' }, { status: 400 });
     }
 
+    // 3. Process Buffer in RAM
     const arrayBuffer = await audioFile.arrayBuffer();
     const base64Audio = Buffer.from(arrayBuffer).toString('base64');
 
+    // 4. Stream to Multimodal Model Mesh
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -52,9 +67,13 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(JSON.parse(response.text || '{}'));
+    const outputText = response.text;
+    if (!outputText) throw new Error('Empty diagnostic output returned from AI execution node.');
+
+    return NextResponse.json(JSON.parse(outputText));
+
   } catch (error: any) {
-    console.error('Gemini Pipeline Error:', error);
+    console.error('Gemini Execution Pipeline Error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
